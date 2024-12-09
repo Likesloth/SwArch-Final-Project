@@ -16,7 +16,7 @@ const counterProto = grpc.loadPackageDefinition(packageDefinition).Counter;
 function manipulateCounter(call, callback) {
     const currentValue = call.request.currentValue;
     const newValue = currentValue + 2; // Logic: Add 2
-    console.log(`Manipulating counter: ${currentValue} + 2 = ${newValue}`); //debug fro gRPC
+    console.log(`Manipulating counter: ${currentValue} + 2 = ${newValue}`); //debug for gRPC
     callback(null, { newValue });
 }
 
