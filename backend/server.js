@@ -44,28 +44,28 @@ app.post('/api/counter', async (req, res) => {
   const { increment } = req.body;
 
   try {
-    // Retrieve the current counter value from the database
-    const counter = await Counter.findOne();
-    if (!counter) {
-      return res.status(404).send('Counter not found');
-    }
-
-    // Call the gRPC service to manipulate the counter
-    pluginClient.manipulateCounter({ currentValue: counter.value }, async (err, response) => {
-      if (err) {
-        console.error('Error processing gRPC request:', err);
-        return res.status(500).send('Internal Server Error');
+      // Retrieve the current counter value from the database
+      const counter = await Counter.findOne();
+      if (!counter) {
+          return res.status(404).send('Counter not found');
       }
 
-      // Update the counter in the database with the new value
-      counter.value = response.newValue;
-      await counter.save();
+      // Call the gRPC service to manipulate the counter
+      pluginClient.manipulateCounter({ currentValue: counter.value }, async (err, response) => {
+          if (err) {
+              console.error('Error processing gRPC request:', err);
+              return res.status(500).send('Internal Server Error');
+          }
 
-      res.json({ counter: counter.value });
-    });
+          // Update the counter in the database with the new value
+          counter.value = response.newValue;
+          await counter.save();
+
+          res.json({ counter: counter.value });
+      });
   } catch (err) {
-    console.error('Error processing increase request:', err);
-    res.status(500).send('Internal Server Error');
+      console.error('Error processing increase request:', err);
+      res.status(500).send('Internal Server Error');
   }
 });
 
@@ -88,6 +88,11 @@ app.post('/api/counter/decrease', async (req, res) => {
     console.error('Error processing decrease request:', err);
     res.status(500).send('Internal Server Error');
   }
+});
+
+// New route for `/api/` to respond with a simple message
+app.get('/api/', (req, res) => {
+  res.send('API is working');
 });
 
 // Start the server

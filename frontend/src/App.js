@@ -5,7 +5,7 @@ function App() {
 
     useEffect(() => {
         // Fetch the current counter value from the backend
-        fetch(`${process.env.REACT_APP_BASE_URL}/api/counter`)
+        fetch(`${process.env.REACT_APP_BASE_URL}/counter`)
             .then((response) => {
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
@@ -18,7 +18,7 @@ function App() {
 
     // Function to handle increment (increase) logic
     const increaseCounter = () => {
-        fetch(`${process.env.REACT_APP_BASE_URL}/api/counter`, {
+        fetch(`${process.env.REACT_APP_BASE_URL}/counter`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ increment: counter + 1 }), // Increment counter by 1
@@ -34,7 +34,7 @@ function App() {
     };
 
     const decreaseCounter = () => {
-        fetch(`${process.env.REACT_APP_BASE_URL}/api/counter/decrease`, {
+        fetch(`${process.env.REACT_APP_BASE_URL}/counter/decrease`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
         })
