@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+service Counter { // Ensure service name is "Counter"
+    rpc manipulateCounter (CounterRequest) returns (CounterReply); // Ensure method name is "manipulateCounter"
+}
+
+message CounterRequest {
+    int32 currentValue = 1; // Input: current value of the counter
+}
+
+message CounterReply {
+    int32 newValue = 1; // Output: updated value of the counter
+}

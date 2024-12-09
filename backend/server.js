@@ -1,6 +1,7 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
+const mongoose = require('mongoose');
+const pluginClient = require('./pluginClient');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -9,47 +10,87 @@ const PORT = process.env.PORT || 8000;
 app.use(cors());
 app.use(express.json());
 
-// Connect to MongoDB
-const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/counterdb';
+// MongoDB connection
 mongoose
-    .connect(mongoURI)
-    .then(() => console.log('Connected to MongoDB'))
-    .catch((err) => console.error('Failed to connect to MongoDB', err));
+  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('Connected to MongoDB'))
+  .catch((err) => console.error('Failed to connect to MongoDB:', err));
 
-// Define Counter Schema and Model
-const counterSchema = new mongoose.Schema({
-    value: { type: Number, required: true },
-});
-
+// Counter schema and model
+const counterSchema = new mongoose.Schema({ value: Number });
 const Counter = mongoose.model('Counter', counterSchema);
 
-// Initialize Counter if Not Exists
+// Initialize counter value if not exists
 Counter.findOne().then((counter) => {
-    if (!counter) {
-        const newCounter = new Counter({ value: 0 });
-        newCounter.save();
-    }
+  if (!counter) {
+    new Counter({ value: 0 }).save();
+  }
 });
 
-// Default Route
-app.get('/', (req, res) => {
-    res.send('Welcome to the Backend Server');
-});
-
-// Routes
+// GET route for counter
 app.get('/api/counter', async (req, res) => {
+  try {
     const counter = await Counter.findOne();
-    res.send({ counter: counter.value });
+    res.json({ counter: counter.value });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
+// POST route to update counter
+// POST endpoint to update the counter
 app.post('/api/counter', async (req, res) => {
-    const { increment } = req.body;
+  const { increment } = req.body;
+
+  try {
+    // Retrieve the current counter value from the database
     const counter = await Counter.findOne();
-    counter.value = increment;
-    await counter.save();
-    res.send({ counter: counter.value });
+    if (!counter) {
+      return res.status(404).send('Counter not found');
+    }
+
+    // Call the gRPC service to manipulate the counter
+    pluginClient.manipulateCounter({ currentValue: counter.value }, async (err, response) => {
+      if (err) {
+        console.error('Error processing gRPC request:', err);
+        return res.status(500).send('Internal Server Error');
+      }
+
+      // Update the counter in the database with the new value
+      counter.value = response.newValue;
+      await counter.save();
+
+      res.json({ counter: counter.value });
+    });
+  } catch (err) {
+    console.error('Error processing increase request:', err);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
+
+// New route for decreasing the counter (direct database operation)
+app.post('/api/counter/decrease', async (req, res) => {
+  try {
+    // Find the counter document
+    const counter = await Counter.findOne();
+    if (!counter) {
+      return res.status(404).send('Counter not found');
+    }
+
+    // Decrease the counter value by 1
+    counter.value -= 1;
+    await counter.save();
+
+    res.json({ counter: counter.value });
+  } catch (err) {
+    console.error('Error processing decrease request:', err);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+// Start the server
 app.listen(PORT, () => {
-    console.log(`Backend server is running on http://localhost:${PORT}`);
+  console.log(`Backend running on http://localhost:${PORT}`);
 });

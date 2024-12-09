@@ -1,0 +1,7 @@
+FROM node:lts-alpine3.18
+
+WORKDIR /plugin
+COPY package.json ./
+RUN npm install
+COPY . ./
+CMD ["node", "plugin.js"]

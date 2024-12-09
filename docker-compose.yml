@@ -28,8 +28,24 @@ services:
     environment:
       - PORT=8000
       - MONGO_URI=mongodb://mongo:27017/counterdb
+      - PLUGIN_HOST=plugin # Changed: Ensure this matches the plugin service name
+      - PLUGIN_PORT=50051  # Changed: Ensure this matches the plugin service port
     depends_on:
       - mongo
+      - plugin
+
+  plugin:
+    container_name: plugin
+    build:
+      context: ./plugin
+      dockerfile: Dockerfile.development
+    volumes:
+      - "./plugin:/plugin"
+      - "/plugin/node_modules"
+    ports:
+      - "50051:50051"
+    environment:
+      - PLUGIN_PORT=50051
 
   mongo:
     image: mongo
