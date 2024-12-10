@@ -1,13 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import io from 'socket.io-client';
 
 function HistoryPage() {
     const [history, setHistory] = useState([]);
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Fetch history from the backend (history-service API)
-        fetch('http://localhost:3001/api/history') // Replace with the correct API endpoint
+        const socket = io('http://localhost:3001'); // Connect to history-service
+
+        socket.on('connect', () => {
+            console.log('Connected to Socket.IO server');
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Disconnected from Socket.IO server');
+        });
+
+        // Fetch initial history data
+        fetch('http://localhost:3001/api/history')
             .then((response) => {
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
@@ -16,6 +27,23 @@ function HistoryPage() {
             })
             .then((data) => setHistory(data))
             .catch((error) => console.error('Error fetching history:', error));
+
+        // Listen for new events and update history state
+        socket.on('new-event', (newEvent) => {
+            console.log('New event received:', newEvent);
+
+            // Add new event at the top of the list
+            setHistory((prevHistory) => {
+                const updatedHistory = [newEvent, ...prevHistory];
+                // console.log('Updated history:', updatedHistory); // for debug
+                return updatedHistory;
+            });
+        });
+
+        // Clean up socket connection on unmount
+        return () => {
+            socket.disconnect();
+        };
     }, []);
 
     return (

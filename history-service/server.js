@@ -88,6 +88,7 @@ async function connectRabbitMQ() {
 
               // Broadcast event to WebSocket clients
               io.emit('new-event', event);
+              console.log('Broadcasting new event to WebSocket clients:', event);
             } catch (dbError) {
               console.error('Failed to save event to database:', dbError);
             }
