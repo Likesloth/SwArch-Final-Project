@@ -85,8 +85,8 @@ services:
       - "./rabbit_data:/var/lib/rabbitmq/"
       - "./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf"
     ports:
-      - "5672:5672"     # RabbitMQ messaging port
-      - "15672:15672"   # RabbitMQ management UI port
+      - "5672:5672" # RabbitMQ messaging port
+      - "15672:15672" # RabbitMQ management UI port
     environment:
       - RABBITMQ_DEFAULT_USER=${BROKER_USER}
       - RABBITMQ_DEFAULT_PASS=${BROKER_PASSWORD}
@@ -101,19 +101,24 @@ services:
     volumes:
       - "./history-service:/app"
       - "/app/node_modules"
+    expose:
+      - "3001"
+    ports:
+      - "3001:3001"
     environment:
       - RABBITMQ_URL=amqp://${BROKER_USER}:${BROKER_PASSWORD}@rabbitmq:5672
       - BROKER_EXCHANGE_NAME=clicker-events
     depends_on:
       - rabbitmq
+      - mongo
     networks:
       - clicker-network
-
+      
 volumes:
   mongo_data:
+
 
 networks:
   clicker-network:
     name: clicker-network
     driver: bridge
-
