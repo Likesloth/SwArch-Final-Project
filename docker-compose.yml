@@ -17,6 +17,7 @@ services:
       - WDS_SOCKET_HOST=localhost
       - WDS_SOCKET_PORT=9000
       - WDS_SOCKET_PATH=/wds
+      - NODE_OPTIONS=--openssl-legacy-provider
     networks:
       - clicker-network
 
@@ -113,4 +114,6 @@ volumes:
 
 networks:
   clicker-network:
+    name: clicker-network
     driver: bridge
+
