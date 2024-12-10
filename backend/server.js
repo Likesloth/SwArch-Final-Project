@@ -21,6 +21,14 @@ mongoose
 const counterSchema = new mongoose.Schema({ value: Number });
 const Counter = mongoose.model('Counter', counterSchema);
 
+// ** Define the History schema and model **
+const historySchema = new mongoose.Schema({
+  action: String,
+  value: Number,
+  timestamp: Date,
+});
+const History = mongoose.model('History', historySchema);
+
 // Initialize counter value if not exists
 Counter.findOne().then((counter) => {
   if (!counter) {
@@ -57,12 +65,10 @@ async function connectRabbitMQ() {
   process.exit(1); // Exit process if connection fails
 }
 
-
-
-//get history
+// Route to get history
 app.get('/api/history', async (req, res) => {
   try {
-    const history = await History.find(); // Assuming `History` is your MongoDB model for history
+    const history = await History.find().sort({ timestamp: -1 }); // Sort by most recent first
     res.json(history);
   } catch (err) {
     console.error('Error fetching history:', err);
@@ -70,8 +76,7 @@ app.get('/api/history', async (req, res) => {
   }
 });
 
-
-
+// RabbitMQ connection
 connectRabbitMQ();
 
 function publishEvent(action, value) {

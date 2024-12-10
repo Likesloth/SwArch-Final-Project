@@ -1,12 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import io from 'socket.io-client';
 
 function HistoryPage() {
     const [history, setHistory] = useState([]);
 
     useEffect(() => {
-        const socket = io('http://localhost:3001'); // Connect to history-service
+        // Fetch initial history data from the backend
+        fetch(`${process.env.REACT_APP_SOCKET_URL}/api/history`)
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then((data) => {
+                setHistory(data); // Set the initial history data from the backend
+            })
+            .catch((error) => console.error('Error fetching history:', error));
+
+        // Connect to WebSocket for real-time updates
+        const socket = io(process.env.REACT_APP_SOCKET_URL);
 
         socket.on('connect', () => {
             console.log('Connected to Socket.IO server');
@@ -16,29 +29,14 @@ function HistoryPage() {
             console.log('Disconnected from Socket.IO server');
         });
 
-        // Fetch initial history data
-        fetch('http://localhost:3001/api/history')
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then((data) => setHistory(data))
-            .catch((error) => console.error('Error fetching history:', error));
-
-        // Listen for new events and update history state
+        // Listen for new events and update the history state
         socket.on('new-event', (newEvent) => {
             console.log('New event received:', newEvent);
 
-            // Add new event at the top of the list
-            setHistory((prevHistory) => {
-                const updatedHistory = [newEvent, ...prevHistory];
-                return updatedHistory;
-            });
+            setHistory((prevHistory) => [newEvent, ...prevHistory]); // Add the new event to the top of the history
         });
 
-        // Clean up socket connection on unmount
+        // Clean up the WebSocket connection when the component is unmounted
         return () => {
             socket.disconnect();
         };

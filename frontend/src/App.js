@@ -6,12 +6,12 @@ import io from 'socket.io-client';
 function App() {
     const [counter, setCounter] = useState(0);
 
-    // Manually specify the socket URL
-    const socket = io('http://localhost:3001'); // Replace with the actual history-service URL
+    // Use REACT_APP_SOCKET_URL from the .env file
+    const socket = io(process.env.REACT_APP_SOCKET_URL); 
 
     useEffect(() => {
-        // Fetch the current counter value from the backend
-        fetch('http://localhost:9000/api/counter') // Replace with your API backend URL
+        // Fetch the current counter value from the backend using REACT_APP_BASE_URL
+        fetch(`${process.env.REACT_APP_BASE_URL}/counter`)
             .then((response) => {
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
@@ -24,7 +24,6 @@ function App() {
         // Listen for real-time events from the socket
         socket.on('new-event', (event) => {
             console.log('New event received:', event);
-            // Optionally handle updates based on real-time events
         });
 
         // Clean up the socket connection on component unmount
@@ -35,7 +34,7 @@ function App() {
 
     // Function to handle increment (increase) logic
     const increaseCounter = () => {
-        fetch('http://localhost:9000/api/counter', {
+        fetch(`${process.env.REACT_APP_BASE_URL}/counter`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ increment: counter + 1 }), // Increment counter by 1
@@ -51,7 +50,7 @@ function App() {
     };
 
     const decreaseCounter = () => {
-        fetch('http://localhost:9000/api/counter/decrease', {
+        fetch(`${process.env.REACT_APP_BASE_URL}/counter/decrease`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
         })
@@ -66,25 +65,34 @@ function App() {
     };
 
     return (
-        <div style={{ textAlign: 'center', marginTop: '50px' }}>
-            <h1>Counter: {counter}</h1>
-            <button onClick={increaseCounter} style={{ padding: '10px 20px', fontSize: '18px', marginRight: '10px' }}>
-                Increase
-            </button>
-            <button onClick={decreaseCounter} style={{ padding: '10px 20px', fontSize: '18px' }}>
-                Decrease
-            </button>
-            <Router>
-                <nav>
-                    <div><Link to="/">Home</Link></div>
-                    <div><Link to="/history">Go To History Page</Link></div>
-                </nav>
-                <Routes>
-                    <Route path="/"/>
-                    <Route path="/history" element={<HistoryPage />} />
-                </Routes>
-            </Router>
-        </div>
+        <Router>
+            <Routes>
+                <Route
+                    path="/"
+                    element={
+                        <div style={{ textAlign: 'center', marginTop: '50px' }}>
+                            <h1>Counter: {counter}</h1>
+                            <button
+                                onClick={increaseCounter}
+                                style={{ padding: '10px 20px', fontSize: '18px', marginRight: '10px' }}
+                            >
+                                Increase
+                            </button>
+                            <button
+                                onClick={decreaseCounter}
+                                style={{ padding: '10px 20px', fontSize: '18px' }}
+                            >
+                                Decrease
+                            </button>
+                            <div style={{ marginTop: '20px' }}>
+                                <Link to="/history">Go To History Page</Link>
+                            </div>
+                        </div>
+                    }
+                />
+                <Route path="/history" element={<HistoryPage />} />
+            </Routes>
+        </Router>
     );
 }
 

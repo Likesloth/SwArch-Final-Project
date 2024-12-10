@@ -34,5 +34,4 @@ app.listen(PORT, () => {
   console.log(`History Service running on http://localhost:${PORT}`);
 });
 
-// Export the model
-module.exports = mongoose.model('History', historySchema);
+
