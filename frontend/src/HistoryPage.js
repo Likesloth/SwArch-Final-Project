@@ -35,7 +35,6 @@ function HistoryPage() {
             // Add new event at the top of the list
             setHistory((prevHistory) => {
                 const updatedHistory = [newEvent, ...prevHistory];
-                // console.log('Updated history:', updatedHistory); // for debug
                 return updatedHistory;
             });
         });
@@ -49,47 +48,42 @@ function HistoryPage() {
     return (
         <div style={{ textAlign: 'center', marginTop: '50px' }}>
             <h1>History</h1>
-            <table
+            <div
                 style={{
                     margin: '0 auto',
-                    borderCollapse: 'collapse',
                     width: '80%',
-                    textAlign: 'left',
+                    maxHeight: '400px', // Set a fixed height for the scrollable container
+                    overflowY: 'auto', // Enable vertical scrolling
+                    border: '1px solid #ddd', // Optional: border for better visibility
                 }}
             >
-                <thead>
-                    <tr>
-                        <th style={{ border: '1px solid #ddd', padding: '8px' }}>Date/Time</th>
-                        <th style={{ border: '1px solid #ddd', padding: '8px' }}>Event Type</th>
-                        <th style={{ border: '1px solid #ddd', padding: '8px' }}>Current Value</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {history.map((event, index) => (
-                        <tr key={index}>
-                            <td style={{ border: '1px solid #ddd', padding: '8px' }}>
-                                {new Date(event.timestamp).toLocaleString()}
-                            </td>
-                            <td style={{ border: '1px solid #ddd', padding: '8px' }}>{event.action}</td>
-                            <td style={{ border: '1px solid #ddd', padding: '8px' }}>{event.value}</td>
+                <table
+                    style={{
+                        width: '100%',
+                        borderCollapse: 'collapse',
+                        textAlign: 'left',
+                    }}
+                >
+                    <thead>
+                        <tr>
+                            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Date/Time</th>
+                            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Event Type</th>
+                            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Current Value</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
-            <button
-                onClick={() => navigate('/')}
-                style={{
-                    marginTop: '20px',
-                    padding: '10px 20px',
-                    fontSize: '16px',
-                    backgroundColor: '#007bff',
-                    color: '#fff',
-                    border: 'none',
-                    cursor: 'pointer',
-                }}
-            >
-                Back to Counter
-            </button>
+                    </thead>
+                    <tbody>
+                        {history.map((event, index) => (
+                            <tr key={index}>
+                                <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                                    {new Date(event.timestamp).toLocaleString()}
+                                </td>
+                                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{event.action}</td>
+                                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{event.value}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 }
