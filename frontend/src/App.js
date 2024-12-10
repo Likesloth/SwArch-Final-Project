@@ -59,6 +59,7 @@ function App() {
                 Decrease
             </button>
         </div>
+        
     );
 }
 

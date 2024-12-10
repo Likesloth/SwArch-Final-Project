@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const pluginClient = require('./pluginClient');
+const amqp = require('amqplib');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -27,6 +28,62 @@ Counter.findOne().then((counter) => {
   }
 });
 
+// RabbitMQ Setup
+let channel;
+
+async function connectRabbitMQ() {
+  const RETRY_INTERVAL = 5000; // Retry every 5 seconds
+  const MAX_RETRIES = 10;
+  let retries = 0;
+
+  while (retries < MAX_RETRIES) {
+    try {
+      const connection = await amqp.connect(process.env.RABBITMQ_URL);
+      channel = await connection.createChannel();
+
+      // Declare the `clicker-events` exchange in fanout mode
+      await channel.assertExchange(process.env.BROKER_EXCHANGE_NAME, 'fanout', { durable: true });
+      console.log(`Exchange "${process.env.BROKER_EXCHANGE_NAME}" declared`);
+
+      return;
+    } catch (err) {
+      retries++;
+      console.error(`RabbitMQ connection failed. Retry ${retries}/${MAX_RETRIES}...`);
+      await new Promise((resolve) => setTimeout(resolve, RETRY_INTERVAL));
+    }
+  }
+
+  console.error('Failed to connect to RabbitMQ after maximum retries');
+  process.exit(1); // Exit process if connection fails
+}
+
+
+
+//get history
+app.get('/api/history', async (req, res) => {
+  try {
+    const history = await History.find(); // Assuming `History` is your MongoDB model for history
+    res.json(history);
+  } catch (err) {
+    console.error('Error fetching history:', err);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+
+
+connectRabbitMQ();
+
+function publishEvent(action, value) {
+  const event = { action, value, timestamp: new Date() };
+  if (channel) {
+    channel.publish(process.env.BROKER_EXCHANGE_NAME, '', Buffer.from(JSON.stringify(event)));
+    console.log(`Published event to RabbitMQ: ${JSON.stringify(event)}`);
+  }
+}
+
+// Routes
+
 // GET route for counter
 app.get('/api/counter', async (req, res) => {
   try {
@@ -39,53 +96,46 @@ app.get('/api/counter', async (req, res) => {
 });
 
 // POST route to update counter
-// POST endpoint to update the counter
 app.post('/api/counter', async (req, res) => {
   const { increment } = req.body;
 
   try {
-      // Retrieve the current counter value from the database
-      const counter = await Counter.findOne();
-      if (!counter) {
-          return res.status(404).send('Counter not found');
+    const counter = await Counter.findOne();
+    if (!counter) return res.status(404).send('Counter not found');
+
+    pluginClient.manipulateCounter({ currentValue: counter.value }, async (err, response) => {
+      if (err) {
+        console.error('Error processing gRPC request:', err);
+        return res.status(500).send('Internal Server Error');
       }
 
-      // Call the gRPC service to manipulate the counter
-      pluginClient.manipulateCounter({ currentValue: counter.value }, async (err, response) => {
-          if (err) {
-              console.error('Error processing gRPC request:', err);
-              return res.status(500).send('Internal Server Error');
-          }
+      counter.value = response.newValue;
+      await counter.save();
 
-          // Update the counter in the database with the new value
-          counter.value = response.newValue;
-          await counter.save();
+      publishEvent('increase', counter.value);
 
-          res.json({ counter: counter.value });
-      });
+      res.json({ counter: counter.value });
+    });
   } catch (err) {
-      console.error('Error processing increase request:', err);
-      res.status(500).send('Internal Server Error');
+    console.error('Error updating counter:', err);
+    res.status(500).send('Internal Server Error');
   }
 });
 
-
-// New route for decreasing the counter (direct database operation)
+// POST route for decreasing the counter
 app.post('/api/counter/decrease', async (req, res) => {
   try {
-    // Find the counter document
     const counter = await Counter.findOne();
-    if (!counter) {
-      return res.status(404).send('Counter not found');
-    }
+    if (!counter) return res.status(404).send('Counter not found');
 
-    // Decrease the counter value by 1
     counter.value -= 1;
     await counter.save();
 
+    publishEvent('decrease', counter.value);
+
     res.json({ counter: counter.value });
   } catch (err) {
-    console.error('Error processing decrease request:', err);
+    console.error('Error updating counter:', err);
     res.status(500).send('Internal Server Error');
   }
 });

@@ -3,7 +3,7 @@ FROM node:lts-alpine3.18
 WORKDIR /server
 
 # Copy package.json and install dependencies
-COPY package.json package-lock.json* ./
+COPY package*.json ./
 RUN npm install
 
 # Copy application files

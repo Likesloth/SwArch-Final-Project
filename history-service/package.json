@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "amqplib": "^0.10.5",
+    "mongoose": "^8.8.4"
+  }
+}
