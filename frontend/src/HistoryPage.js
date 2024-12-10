@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import io from 'socket.io-client';
 
 function HistoryPage() {
     const [history, setHistory] = useState([]);
-    const navigate = useNavigate();
 
     useEffect(() => {
         const socket = io('http://localhost:3001'); // Connect to history-service
