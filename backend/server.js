@@ -102,10 +102,12 @@ app.get('/api/counter', async (req, res) => {
 
 // POST route to update counter
 app.post('/api/counter', async (req, res) => {
-  const { increment } = req.body;
+  // const { increment } = req.body;
+  // console.log("increment respone from Frontend:", increment);
 
   try {
     const counter = await Counter.findOne();
+    // console.log("increment in data Base:", counter);
     if (!counter) return res.status(404).send('Counter not found');
 
     pluginClient.manipulateCounter({ currentValue: counter.value }, async (err, response) => {
@@ -114,10 +116,11 @@ app.post('/api/counter', async (req, res) => {
         return res.status(500).send('Internal Server Error');
       }
 
-      counter.value = response.newValue;
-      await counter.save();
+      counter.value = response.newValue; //set new value respone from plugin
+      await counter.save(); //save new value into Mongo database
 
-      publishEvent('increase', counter.value);
+      publishEvent('increase', counter.value); //pubils events increse with counter value to RabbitMQ
+      // console.log("increase publish event:", counter.value);
 
       res.json({ counter: counter.value });
     });

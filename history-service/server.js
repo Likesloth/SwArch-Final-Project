@@ -68,13 +68,13 @@ async function connectRabbitMQ() {
       // Declare exchange and queue
       await channel.assertExchange(BROKER_EXCHANGE_NAME, 'fanout', { durable: true });
       await channel.assertQueue(QUEUE_NAME, { durable: true });
-      await channel.bindQueue(QUEUE_NAME, BROKER_EXCHANGE_NAME, '');
+      await channel.bindQueue(QUEUE_NAME, BROKER_EXCHANGE_NAME, ''); //clicker-events
 
       console.log(`Queue "${QUEUE_NAME}" is bound to exchange "${BROKER_EXCHANGE_NAME}"`);
 
       // Consume messages from the queue
       channel.consume(
-        QUEUE_NAME,
+        QUEUE_NAME, //history-service
         async (msg) => {
           if (msg) {
             const event = JSON.parse(msg.content.toString());

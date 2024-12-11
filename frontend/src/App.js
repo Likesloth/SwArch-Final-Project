@@ -7,7 +7,7 @@ function App() {
     const [counter, setCounter] = useState(0);
 
     // Use REACT_APP_SOCKET_URL from the .env file
-    const socket = io(process.env.REACT_APP_SOCKET_URL); 
+    const socket = io(process.env.REACT_APP_SOCKET_URL);  //listent to prot http://localhost:3001
 
     useEffect(() => {
         // Fetch the current counter value from the backend using REACT_APP_BASE_URL
@@ -21,10 +21,13 @@ function App() {
             .then((data) => setCounter(data.counter))
             .catch((error) => console.error('Error fetching counter:', error));
 
-        // Listen for real-time events from the socket
         socket.on('new-event', (event) => {
             console.log('New event received:', event);
+
+            // Update the counter state with the new value from the event
+            setCounter(event.value);
         });
+
 
         // Clean up the socket connection on component unmount
         return () => {
